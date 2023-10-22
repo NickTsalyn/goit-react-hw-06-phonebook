@@ -2,6 +2,9 @@ import * as Yup from 'yup';
 
 import { Formik, Field} from 'formik';
 import { Button, FormStyled } from './ContactForm.styled';
+import { useDispatch, useSelector } from 'react-redux';
+import { addContact } from 'redux/contactSlice';
+import { nanoid } from 'nanoid';
 
 
 const FormValidSchema = Yup.object().shape({
@@ -20,7 +23,29 @@ const FormValidSchema = Yup.object().shape({
     .required('Required'),
 });
 
-export const ContactForm = ({ contacts, addContact }) => {
+export const ContactForm = () => {
+  const dispatch = useDispatch()
+  const contacts = useSelector(state => state.contacts.list)
+
+  const handleSubmit = ({name, number}) => {
+    const newContact = {
+      id: nanoid(),
+      name,
+      number
+    }
+    const isDublicate = contacts.some(
+      contact => contact.name.toLowerCase() === name.toLowerCase()
+    );
+
+    if (isDublicate) {
+      alert('This name already exists. Please enter a different name.');
+      return;
+    }
+
+    dispatch(addContact(newContact))
+  }
+
+
   return (
     <Formik
       initialValues={{
@@ -28,21 +53,7 @@ export const ContactForm = ({ contacts, addContact }) => {
         number: '',
       }}
       validationSchema={FormValidSchema}
-      onSubmit={values => {
-        const isDublicate = contacts.some(
-          contact => contact.name.toLowerCase() === values.name.toLowerCase()
-        );
-
-        if (isDublicate) {
-          alert('This name already exists. Please enter a different name.');
-          return;
-        }
-
-        addContact(values);
-
-        values.name = '';
-        values.number = '';
-      }}
+      onSubmit={handleSubmit}
     >
       <FormStyled>
         <label htmlFor="Name">Name</label>
